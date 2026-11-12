@@ -4,6 +4,7 @@ import { createInterface } from "node:readline/promises";
 import { createAiScorer, type AiScorer } from "./ai";
 import { fileCache } from "./ai/cache";
 import { createModelCall } from "./ai/client";
+import { compareModels } from "./compare";
 import { LIMITS, MODELS } from "./config";
 import { formatJson, formatMarkdown, formatText } from "./report";
 import { rubric } from "./rubric";
@@ -75,14 +76,18 @@ async function askQuestionnaire(): Promise<Answers> {
   return AnswersSchema.parse(JSON.parse(JSON.stringify(answers)));
 }
 
-// Builds the AI scorer, or explains why it cannot run. The key comes from a
-// .env file in this folder (never committed) or from the environment.
-function buildAiScorer(): AiScorer {
+// The key comes from a .env file in this folder (never committed) or from the environment.
+function loadEnv(): void {
   try {
     process.loadEnvFile(".env");
   } catch {
     // No .env file is fine; the key may already be in the environment.
   }
+}
+
+// Builds the AI scorer, or explains why it cannot run.
+function buildAiScorer(): AiScorer {
+  loadEnv();
   if (!process.env.ANTHROPIC_API_KEY) {
     return async () => ({
       scores: {},
@@ -111,6 +116,17 @@ program
 
     const result = await scoreText(text, opts.targetRole, answers, opts.ai ? buildAiScorer() : undefined);
     console.log(opts.json ? formatJson(result) : opts.markdown ? formatMarkdown(result) : formatText(result));
+  });
+
+program
+  .command("compare")
+  .description("score a folder of profiles with both models and write docs/model-ab.md")
+  .argument("<folder>", "folder of .txt profiles")
+  .requiredOption("--target-role <role>", "the role to score every profile against")
+  .action(async (folder: string, opts: { targetRole: string }) => {
+    loadEnv();
+    if (!process.env.ANTHROPIC_API_KEY) fail("No API key found. Copy .env.example to .env and add your key.");
+    console.log(`Wrote ${await compareModels(folder, opts.targetRole)}`);
   });
 
 program.parseAsync().catch((err: unknown) => fail(err instanceof Error ? err.message : String(err)));
