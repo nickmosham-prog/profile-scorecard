@@ -16,18 +16,13 @@ export type AiSubScore = z.infer<typeof AiSubScoreSchema>;
 export const AI_CATEGORIES = ["headline", "about", "experience"] as const;
 export type AiCategory = (typeof AI_CATEGORIES)[number];
 
-// What we ask the API to return. Number ranges are checked by AiSubScoreSchema
-// afterwards rather than here, so the request schema stays simple.
-const WireSubScore = z.object({
+// What we ask the API to return for one section. Number ranges are checked by
+// AiSubScoreSchema afterwards rather than here, so the request schema stays simple.
+export const AiWireSchema = z.object({
   score: z.number(),
   reason: z.string(),
   evidence_quote: z.string(),
   rewrite: z.string(),
-});
-export const AiBatchWireSchema = z.object({
-  headline: WireSubScore,
-  about: WireSubScore,
-  experience: WireSubScore,
 });
 
 // Category id -> sub-score. A missing or null entry means "AI score unavailable".

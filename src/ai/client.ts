@@ -1,6 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
-import { AiBatchWireSchema } from "./schema";
+import { AiWireSchema } from "./schema";
 
 // One request to Claude. Returns whatever JSON came back (still unchecked), or
 // throws. Kept separate from the rest so tests can swap in a fake.
@@ -12,9 +12,9 @@ export function createModelCall(model: string): ModelCall {
   return async (system, user) => {
     const response = await client.messages.parse({
       model,
-      max_tokens: 8000,
+      max_tokens: 4000,
       // "low" keeps cost and wait time down; this is a short scoring task.
-      output_config: { effort: "low", format: zodOutputFormat(AiBatchWireSchema) },
+      output_config: { effort: "low", format: zodOutputFormat(AiWireSchema) },
       system,
       messages: [{ role: "user", content: user }],
     });

@@ -3,8 +3,8 @@ import type { Rubric } from "../rubric";
 import type { Profile } from "../types";
 import { cacheKey, type AiCache } from "./cache";
 import { describeError, type ModelCall } from "./client";
-import { buildSystemPrompt, buildUserMessage, PROMPT_VERSION } from "./prompt";
-import { AI_CATEGORIES, AiSubScoreSchema, type AiResults } from "./schema";
+import { buildSystemPrompt, buildUserMessage, PROMPT_VERSION, sectionText } from "./prompt";
+import { AI_CATEGORIES, AiSubScoreSchema, type AiCategory, type AiResults, type AiSubScore } from "./schema";
 
 export interface AiOutcome {
   scores: AiResults; // null for any category the AI could not score
@@ -22,52 +22,44 @@ export interface AiDeps {
 // this shape, which is how tests run without the network.
 export type AiScorer = (profile: Profile, targetRole: string) => Promise<AiOutcome>;
 
-const NONE: AiResults = { headline: null, about: null, experience: null };
-
-// Checks each category's sub-score on its own, so one bad entry does not
-// throw away two good ones.
-function validate(raw: unknown): AiResults {
-  const out: AiResults = {};
-  for (const id of AI_CATEGORIES) {
-    const candidate = (raw as Record<string, unknown> | null | undefined)?.[id];
-    const parsed = AiSubScoreSchema.safeParse(candidate);
-    out[id] = parsed.success ? parsed.data : null;
-  }
-  return out;
+interface SectionOutcome {
+  score: AiSubScore | null;
+  problem?: string;
 }
 
-const complete = (r: AiResults) => AI_CATEGORIES.every((id) => r[id]);
+// Scores one section. Never throws: any failure comes back as null plus a reason.
+async function scoreSection(deps: AiDeps, profile: Profile, targetRole: string, category: AiCategory): Promise<SectionOutcome> {
+  const key = cacheKey(RUBRIC_VERSION, deps.model, PROMPT_VERSION, targetRole, category, sectionText(profile, category));
+  const cached = AiSubScoreSchema.safeParse(deps.cache?.get(key));
+  if (cached.success) return { score: cached.data };
 
-// Asks the model for the three sub-scores. Never throws: any failure comes
-// back as "unavailable" plus a reason, and the rule-based score still works.
+  const system = buildSystemPrompt(deps.rubric, category);
+  const user = buildUserMessage(profile, targetRole, category);
+
+  let problem = "";
+  // First try, then retry once if the reply was missing or invalid.
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      const parsed = AiSubScoreSchema.safeParse(await deps.call(system, user));
+      if (parsed.success) {
+        // Only valid results are saved, so a temporary failure is not remembered.
+        deps.cache?.set(key, parsed.data);
+        return { score: parsed.data };
+      }
+      problem = "the model's reply did not match the required format";
+    } catch (error) {
+      problem = describeError(error);
+    }
+  }
+  return { score: null, problem };
+}
+
+// Asks the model for the three sub-scores, one request per section, at the same time.
 export function createAiScorer(deps: AiDeps): AiScorer {
   return async (profile, targetRole) => {
-    const key = cacheKey(profile, targetRole, RUBRIC_VERSION, deps.model, PROMPT_VERSION);
-    const cached = deps.cache?.get(key);
-    if (cached) {
-      const scores = validate(cached);
-      if (complete(scores)) return { scores };
-    }
-
-    const system = buildSystemPrompt(deps.rubric);
-    const user = buildUserMessage(profile, targetRole);
-
-    let scores: AiResults = NONE;
-    let problem: string | undefined;
-    // First try, then retry once if the reply was missing or invalid.
-    for (let attempt = 1; attempt <= 2; attempt++) {
-      try {
-        scores = validate(await deps.call(system, user));
-        problem = complete(scores) ? undefined : "the model's reply did not match the required format";
-      } catch (error) {
-        scores = NONE;
-        problem = describeError(error);
-      }
-      if (complete(scores)) break;
-    }
-
-    // Only complete results are saved, so a temporary failure is not remembered.
-    if (complete(scores)) deps.cache?.set(key, scores);
-    return { scores, problem };
+    const outcomes = await Promise.all(AI_CATEGORIES.map((c) => scoreSection(deps, profile, targetRole, c)));
+    const scores: AiResults = {};
+    AI_CATEGORIES.forEach((c, i) => (scores[c] = outcomes[i].score));
+    return { scores, problem: outcomes.find((o) => o.problem)?.problem };
   };
 }
