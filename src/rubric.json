@@ -1,0 +1,264 @@
+{
+  "version": "1.0.0",
+  "bands": [
+    { "min": 0, "max": 39, "label": "needs work" },
+    { "min": 40, "max": 69, "label": "decent" },
+    { "min": 70, "max": 89, "label": "strong" },
+    { "min": 90, "max": 100, "label": "all-star" }
+  ],
+  "roleStopWords": ["of", "and", "the", "a", "an", "in", "for", "senior", "junior", "sr", "jr", "entry", "level", "i", "ii", "iii", "intern", "associate"],
+  "roleKeywordFamilies": [
+    {
+      "triggers": ["finance", "financial", "fp&a", "accounting", "accountant"],
+      "keywords": ["financial analysis", "financial modeling", "forecasting", "budgeting", "fp&a", "variance analysis", "valuation", "accounting", "gaap", "financial reporting", "excel", "reconciliation", "cash flow", "dcf", "audit"]
+    },
+    {
+      "triggers": ["analyst", "analytics", "analysis", "data"],
+      "keywords": ["data analysis", "excel", "sql", "tableau", "power bi", "reporting", "dashboards", "forecasting", "modeling", "analytics", "kpi", "python", "research", "insights", "visualization"]
+    },
+    {
+      "triggers": ["operations", "ops", "supply", "logistics"],
+      "keywords": ["process improvement", "logistics", "supply chain", "inventory", "scheduling", "project management", "lean", "six sigma", "vendor management", "kpi", "erp", "sap", "workflow", "procurement", "customer service"]
+    },
+    {
+      "triggers": ["business", "management", "administration", "coordinator"],
+      "keywords": ["project management", "stakeholder", "strategy", "crm", "salesforce", "reporting", "excel", "process improvement", "customer service", "communication", "cross-functional", "business development", "marketing", "administration"]
+    }
+  ],
+  "genericHeadlinePhrases": ["seeking opportunities", "seeking new opportunities", "seeking opportunity", "looking for", "open to work", "open to opportunities", "actively seeking", "unemployed", "job seeker", "aspiring professional", "in search of"],
+  "callToActionPhrases": ["reach out", "contact me", "connect with me", "let's connect", "lets connect", "message me", "get in touch", "email me", "dm me", "feel free to connect", "happy to chat", "drop me a note"],
+  "categories": [
+    {
+      "id": "headline",
+      "label": "Headline",
+      "points": 15,
+      "aiWeight": 6,
+      "checks": [
+        {
+          "id": "headline.length",
+          "label": "Headline uses the available space",
+          "points": 3,
+          "basis": "convention",
+          "fix": "Expand your headline to at least 80 of the 220 available characters: role, 2-3 specialties, and who you help.",
+          "params": { "limit": 220, "goodMin": 80, "okMin": 40 }
+        },
+        {
+          "id": "headline.keywords",
+          "label": "Headline names the target role and related keywords",
+          "points": 4,
+          "basis": "consistent-with-documented",
+          "fix": "Put your exact target role in the headline, plus 2 related skills a recruiter would search for.",
+          "params": { "relatedFullAt": 2 }
+        },
+        {
+          "id": "headline.notGeneric",
+          "label": "Headline is specific, not generic",
+          "points": 2,
+          "basis": "convention",
+          "fix": "Replace generic wording (\"Seeking opportunities\", a bare job title) with what you actually do and for whom.",
+          "params": { "minWords": 3 }
+        }
+      ]
+    },
+    {
+      "id": "about",
+      "label": "About",
+      "points": 15,
+      "aiWeight": 6,
+      "checks": [
+        {
+          "id": "about.length",
+          "label": "About section length",
+          "points": 3,
+          "basis": "convention",
+          "fix": "Write an About section of 1,500-2,600 characters: who you are, what you have delivered, what you want next.",
+          "params": { "min": 1500, "max": 2600, "okMin": 800, "thinMin": 300 }
+        },
+        {
+          "id": "about.keywordsEarly",
+          "label": "Target-role keywords in the first 2 lines of About",
+          "points": 3,
+          "basis": "convention",
+          "fix": "Open your About section with your target role and core skills; only the first lines show before \"see more\".",
+          "params": { "fullAt": 2, "maxChars": 300 }
+        },
+        {
+          "id": "about.callToAction",
+          "label": "About has a contact line or call to action",
+          "points": 3,
+          "basis": "convention",
+          "fix": "End your About section with a way to reach you (email, or \"message me about ...\").",
+          "params": {}
+        }
+      ]
+    },
+    {
+      "id": "experience",
+      "label": "Experience",
+      "points": 20,
+      "aiWeight": 8,
+      "checks": [
+        {
+          "id": "experience.descriptions",
+          "label": "Every role has a description",
+          "points": 6,
+          "basis": "consistent-with-documented",
+          "fix": "Add a description to every role; empty roles give searchers and recruiters nothing to match on.",
+          "params": { "minChars": 50 }
+        },
+        {
+          "id": "experience.quantified",
+          "label": "Quantified results in experience",
+          "points": 6,
+          "basis": "convention",
+          "fix": "Add numbers to your experience bullets (%, $, counts, time saved). Aim for at least 5 quantified results.",
+          "params": { "fullAt": 5 }
+        }
+      ]
+    },
+    {
+      "id": "skills",
+      "label": "Skills",
+      "points": 10,
+      "aiWeight": 0,
+      "checks": [
+        {
+          "id": "skills.count",
+          "label": "Number of skills listed",
+          "points": 6,
+          "basis": "convention",
+          "fix": "List more skills; 30 or more earns full marks.",
+          "params": { "fullAt": 30 }
+        },
+        {
+          "id": "skills.top3",
+          "label": "Top 3 skills match the target role",
+          "points": 4,
+          "basis": "convention",
+          "fix": "Reorder your skills so the first 3 are the ones most relevant to your target role.",
+          "params": {}
+        }
+      ]
+    },
+    {
+      "id": "photoBanner",
+      "label": "Photo and banner",
+      "points": 8,
+      "aiWeight": 0,
+      "checks": [
+        {
+          "id": "photoBanner.photo",
+          "label": "Professional profile photo (self-reported)",
+          "points": 5,
+          "basis": "documented",
+          "fix": "Add a clear, professional profile photo.",
+          "params": {}
+        },
+        {
+          "id": "photoBanner.banner",
+          "label": "Custom banner image (self-reported)",
+          "points": 3,
+          "basis": "convention",
+          "fix": "Replace the default banner with a custom image related to your field.",
+          "params": {}
+        }
+      ]
+    },
+    {
+      "id": "customUrl",
+      "label": "Custom URL",
+      "points": 4,
+      "aiWeight": 0,
+      "checks": [
+        {
+          "id": "customUrl.set",
+          "label": "Custom profile URL (self-reported)",
+          "points": 4,
+          "basis": "convention",
+          "fix": "Claim a clean custom profile URL instead of the default one with random numbers.",
+          "params": {}
+        }
+      ]
+    },
+    {
+      "id": "featured",
+      "label": "Featured",
+      "points": 6,
+      "aiWeight": 0,
+      "checks": [
+        {
+          "id": "featured.items",
+          "label": "At least one Featured item (self-reported)",
+          "points": 6,
+          "basis": "convention",
+          "fix": "Add at least one Featured item: a post, a project link, or a document that shows your work.",
+          "params": { "fullAt": 1 }
+        }
+      ]
+    },
+    {
+      "id": "recommendations",
+      "label": "Recommendations",
+      "points": 8,
+      "aiWeight": 0,
+      "checks": [
+        {
+          "id": "recommendations.count",
+          "label": "Recommendations received (self-reported)",
+          "points": 8,
+          "basis": "convention",
+          "fix": "Ask managers, professors, or teammates for recommendations; 3 or more earns full marks.",
+          "params": { "fullAt": 3 }
+        }
+      ]
+    },
+    {
+      "id": "completeness",
+      "label": "Education, certifications, completeness",
+      "points": 6,
+      "aiWeight": 0,
+      "checks": [
+        {
+          "id": "completeness.education",
+          "label": "Education section filled in",
+          "points": 2,
+          "basis": "consistent-with-documented",
+          "fix": "Fill in your Education section.",
+          "params": {}
+        },
+        {
+          "id": "completeness.certifications",
+          "label": "Certifications listed",
+          "points": 2,
+          "basis": "convention",
+          "fix": "Add at least one certification or course relevant to your target role.",
+          "params": {}
+        },
+        {
+          "id": "completeness.coreSections",
+          "label": "Core sections present (headline, About, experience, skills)",
+          "points": 2,
+          "basis": "consistent-with-documented",
+          "fix": "Fill in every core section: headline, About, experience, and skills.",
+          "params": {}
+        }
+      ]
+    },
+    {
+      "id": "activity",
+      "label": "Activity",
+      "points": 8,
+      "aiWeight": 0,
+      "checks": [
+        {
+          "id": "activity.recent",
+          "label": "Posted or commented in the last 30 days (self-reported)",
+          "points": 8,
+          "basis": "convention",
+          "fix": "Post or leave a thoughtful comment at least once in the next 30 days.",
+          "params": {}
+        }
+      ]
+    }
+  ]
+}

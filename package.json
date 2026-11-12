@@ -1,0 +1,22 @@
+{
+  "name": "profile-scorecard",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Scores a professional-network profile 0-100 against a best-practice rubric. Not affiliated with LinkedIn.",
+  "scripts": {
+    "score": "tsx src/cli.ts score",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "commander": "^15.1.0",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vitest": "^5.1.0"
+  }
+}

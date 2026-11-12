@@ -1,0 +1,81 @@
+Sample Person Eight
+Data Analyst | SQL, Tableau and Python | Turning product and marketing data into decisions for subscription businesses
+Pasadena, California
+
+About
+Data analyst specializing in SQL, Tableau, and Python for subscription businesses. I turn product and marketing data into the dashboards and analysis that teams use to decide what to build and where to spend.
+
+For the last four years I have worked on growth analytics at Example Streaming, where I own the retention reporting used by product, marketing, and finance. I built the churn model that now drives our win-back campaigns, which lifted reactivations by 18% in its first two quarters. I designed the experiment readouts for more than 60 A/B tests and moved the team from one-off spreadsheets to a shared set of Tableau dashboards with 300 weekly viewers.
+
+What I am good at: asking the question behind the question, writing SQL that other people can read, and explaining a result to someone who does not care about p-values. I have trained 25 colleagues in basic SQL so that simple questions no longer wait in a queue.
+
+Before analytics I worked in customer support, and I still think the best insights start with what customers are actually saying. I pair every dashboard with a short written summary because a chart without a conclusion is homework for the reader.
+
+Tools I use every day: SQL (Snowflake, BigQuery), Tableau, Python (pandas), dbt, and Excel when it is the right tool. I am currently learning more about forecasting and causal inference.
+
+I am open to conversations about analytics roles in subscription, media, and consumer technology. Reach out here or at sample.eight@example.com. I answer every message.
+
+Experience
+Senior Data Analyst
+Example Streaming · Full-time
+Jan 2023 - Present · 1 yr 11 mos
+Pasadena, California, United States
+Own retention and churn reporting for a product with 2 million subscribers.
+Built a churn model that lifted reactivations by 18% over two quarters.
+Designed readouts for 60+ A/B tests with product and marketing.
+Launched a Tableau dashboard suite used by 300 people each week.
+
+Data Analyst
+Example Streaming · Full-time
+Aug 2020 - Dec 2022 · 2 yrs 5 mos
+Automated the weekly KPI report in SQL and Python, saving 6 hours per week.
+Trained 25 colleagues in SQL through a monthly workshop.
+Found a billing bug that recovered $140K in annual revenue.
+
+Customer Support Specialist
+Example Streaming · Full-time
+Jun 2018 - Jul 2020 · 2 yrs 2 mos
+Resolved 50+ tickets a day with a 96% satisfaction rating and tagged issues for the product team.
+
+Education
+Example University
+Bachelor of Arts, Statistics
+2014 - 2018
+
+Licenses & Certifications
+Tableau Desktop Specialist
+Google Data Analytics Certificate
+
+Skills
+SQL
+Tableau
+Data Analysis
+Python
+Excel
+Dashboards
+A/B Testing
+Data Visualization
+Forecasting
+Reporting
+dbt
+Snowflake
+BigQuery
+pandas
+Statistics
+Churn Analysis
+Retention
+KPI Development
+Product Analytics
+Marketing Analytics
+Experiment Design
+Stakeholder Management
+Data Modeling
+Storytelling
+Customer Insights
+Looker
+Power BI
+Regression
+Segmentation
+Cohort Analysis
+Presentation Skills
+Mentoring

@@ -1,0 +1,25 @@
+{
+  "_comment": "Synthetic profiles written for testing, not real people. Each expected range is the score band the profile was written to land in, decided before the scorer was run.",
+  "fixtures": [
+    { "file": "01-empty-shell.txt", "targetRole": "Financial Analyst", "min": 0, "max": 39,
+      "answers": { "hasPhoto": false, "hasBanner": false, "hasCustomUrl": false, "featuredCount": 0, "recommendationsCount": 0, "activeLast30Days": false } },
+    { "file": "02-seeking-opportunities.txt", "targetRole": "Operations Coordinator", "min": 0, "max": 39,
+      "answers": { "hasPhoto": true, "hasBanner": false, "hasCustomUrl": false, "featuredCount": 0, "recommendationsCount": 0, "activeLast30Days": false } },
+    { "file": "03-recent-grad-thin.txt", "targetRole": "Business Analyst", "min": 0, "max": 39,
+      "answers": { "hasPhoto": true, "hasBanner": false, "hasCustomUrl": false, "featuredCount": 0, "recommendationsCount": 0, "activeLast30Days": false } },
+    { "file": "04-decent-analyst.txt", "targetRole": "Business Analyst", "min": 40, "max": 69,
+      "answers": { "hasPhoto": true, "hasBanner": false, "hasCustomUrl": true, "featuredCount": 0, "recommendationsCount": 1, "activeLast30Days": false } },
+    { "file": "05-decent-operations.txt", "targetRole": "Operations Coordinator", "min": 40, "max": 69,
+      "answers": { "hasPhoto": true, "hasBanner": false, "hasCustomUrl": false, "featuredCount": 0, "recommendationsCount": 1, "activeLast30Days": true } },
+    { "file": "06-strong-finance.txt", "targetRole": "Financial Analyst", "min": 70, "max": 89,
+      "answers": { "hasPhoto": true, "hasBanner": true, "hasCustomUrl": true, "featuredCount": 0, "recommendationsCount": 2, "activeLast30Days": true } },
+    { "file": "07-strong-operations.txt", "targetRole": "Operations Manager", "min": 70, "max": 89,
+      "answers": { "hasPhoto": true, "hasBanner": false, "hasCustomUrl": true, "featuredCount": 1, "recommendationsCount": 3, "activeLast30Days": false } },
+    { "file": "08-all-star-analyst.txt", "targetRole": "Data Analyst", "min": 90, "max": 100,
+      "answers": { "hasPhoto": true, "hasBanner": true, "hasCustomUrl": true, "featuredCount": 2, "recommendationsCount": 4, "activeLast30Days": true } },
+    { "file": "09-messy-layout.txt", "targetRole": "Operations Analyst", "min": 40, "max": 69,
+      "answers": { "hasPhoto": true, "hasBanner": false, "hasCustomUrl": true, "featuredCount": 0, "recommendationsCount": 0, "activeLast30Days": true } },
+    { "file": "10-role-mismatch.txt", "targetRole": "Financial Analyst", "min": 40, "max": 69,
+      "answers": { "hasPhoto": true, "hasBanner": true, "hasCustomUrl": true, "featuredCount": 0, "recommendationsCount": 3, "activeLast30Days": true } }
+  ]
+}
