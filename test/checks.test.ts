@@ -111,6 +111,9 @@ describe("experience", () => {
   it("counts quantified statements and ignores years", () => {
     expect(countQuantifiedStatements("Joined in 2021. Grew sales 20%. Managed $2M budget.\nLed 5 people")).toBe(3);
     expect(countQuantifiedStatements("Started 2019 and left 2022.")).toBe(0);
+    // Found on a real profile: names with digits in them are not results.
+    expect(countQuantifiedStatements("Called contacts of COVID-19 patients.\nAssisted with the R03 grant process.")).toBe(0);
+    expect(countQuantifiedStatements("Managed a 10-company portfolio.\nSupported a $19.3M grant.\nTrained 4 COVID-19 investigators.")).toBe(3);
   });
 
   it("scores the share of roles with a real description", () => {

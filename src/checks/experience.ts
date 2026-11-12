@@ -2,12 +2,14 @@ import { getCategory, getCheck, param } from "../rubric";
 import type { CategoryResult, Profile } from "../types";
 import { categoryResult, finding, matchedTerms, type CheckContext } from "./shared";
 
-// Counts sentences or bullet lines that contain a number. Four-digit years are
-// removed first, so "Joined in 2021" does not count as a quantified result.
+// Counts sentences or bullet lines that contain a number. Two kinds of digits
+// are removed first because they are names, not results: four-digit years
+// ("Joined in 2021") and codes where letters come before the digits
+// ("COVID-19", "R03"). "10-company" and "$19.3M" still count.
 export function countQuantifiedStatements(text: string): number {
   return text
     .split(/\n|(?<=[.!?])\s+/)
-    .map((s) => s.replace(/\b(19|20)\d{2}\b/g, ""))
+    .map((s) => s.replace(/\b(19|20)\d{2}\b/g, "").replace(/\b[A-Za-z]+-?\d+\b/g, ""))
     .filter((s) => /\d/.test(s)).length;
 }
 
