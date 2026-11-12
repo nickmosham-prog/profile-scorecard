@@ -79,6 +79,20 @@ function toLines(fragments: Fragment[]): string[] {
   return lines;
 }
 
+// Repairs three things real exports do to text: they leave HTML codes such as
+// "&amp;" in place, they drop the line breaks between paragraphs (giving
+// "true cost.Catching those"), and they run bullet points together.
+export function tidyPdfLine(line: string): string {
+  return line
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;|&apos;/g, "'")
+    .replace(/([a-z0-9)][.!?:])([A-Z])/g, "$1\n$2")
+    .replace(/(\S)\s*•\s*/g, "$1\n• ");
+}
+
 // A PDF breaks long sentences across lines. Left alone, "…variance analysis"
 // and "for 5 departments." would count as two separate statements. A line is
 // glued to the one before it when that one stops mid-sentence and this one
@@ -117,7 +131,7 @@ export async function extractPdfText(data: Uint8Array): Promise<string> {
     [main, side] = hasBigName && name.x < boundary ? [left, right] : [right, left];
   }
 
-  const mainLines = unwrap(toLines(main));
+  const mainLines = unwrap(toLines(main)).flatMap((l) => tidyPdfLine(l).split("\n"));
   const sideLines = toLines(side);
 
   // Without a clearly larger name there is nothing more to work out: hand the

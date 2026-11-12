@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { countQuantifiedStatements } from "../src/checks/experience";
 import { parseProfile } from "../src/parse";
-import { extractPdfText, PdfReadError } from "../src/parse/pdf";
+import { extractPdfText, PdfReadError, tidyPdfLine } from "../src/parse/pdf";
 import { scoreText } from "../src/score";
 
 // These PDFs are synthetic: generated to imitate the two-column layout of a
@@ -55,6 +55,19 @@ describe("PDF import", () => {
     const pdf = await scoreText(await extractPdfText(load("profile-two-column.pdf")), "Financial Analyst", answers);
     const txt = await scoreText(readFileSync(join(__dirname, "fixtures", "06-strong-finance.txt"), "utf8"), "Financial Analyst");
     expect(Math.abs(pdf.total - txt.total)).toBeLessThanOrEqual(3);
+  });
+
+  it("repairs what real exports do to text", () => {
+    // Found on the first real exported PDF: HTML codes, missing paragraph breaks, run-together bullets.
+    expect(tidyPdfLine("Example Foods &amp; Catering")).toBe("Example Foods & Catering");
+    expect(tidyPdfLine("the real cost.Finding those gaps since 2019.Operations.")).toBe(
+      "the real cost.\nFinding those gaps since 2019.\nOperations.",
+    );
+    expect(tidyPdfLine("What I bring:• Modeling: comps• Excel: PivotTables")).toBe("What I bring:\n• Modeling: comps\n• Excel: PivotTables");
+    // Ordinary text is left alone: decimals, abbreviations, addresses.
+    for (const fine of ["Grew ROAS from 5.3x to 6.1x.", "B.S. in Business", "a@example.com", "• Built models."]) {
+      expect(tidyPdfLine(fine)).toBe(fine);
+    }
   });
 
   it("rejects a PDF with no text and a file that is not a PDF, with a clear reason", async () => {
