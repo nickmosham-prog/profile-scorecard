@@ -1,11 +1,13 @@
 import { Command } from "commander";
-import { readFileSync } from "node:fs";
+import { appendFileSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { createInterface } from "node:readline/promises";
 import { createAiScorer, type AiScorer } from "./ai";
 import { fileCache } from "./ai/cache";
-import { createModelCall } from "./ai/client";
+import { createModelCall, createStructuredCall } from "./ai/client";
+import { generatePaidReport, PaidReportWireSchema } from "./ai/paidReport";
 import { compareModels } from "./compare";
-import { LIMITS, MODELS } from "./config";
+import { costUsd, LIMITS, MODELS, type Usage } from "./config";
+import { buildBlocks, renderMarkdown, renderPdf } from "./paidReport";
 import { parseProfile } from "./parse";
 import { extractPdfText, PdfReadError } from "./parse/pdf";
 import { formatJson, formatMarkdown, formatText } from "./report";
@@ -107,7 +109,7 @@ function loadEnv(): void {
 }
 
 // Builds the AI scorer, or explains why it cannot run.
-function buildAiScorer(): AiScorer {
+function buildAiScorer(onUsage?: (usage: Usage) => void): AiScorer {
   loadEnv();
   if (!process.env.ANTHROPIC_API_KEY) {
     return async () => ({
@@ -115,7 +117,7 @@ function buildAiScorer(): AiScorer {
       problem: "no API key found; copy .env.example to .env and add your key, or pass --no-ai",
     });
   }
-  return createAiScorer({ call: createModelCall(MODELS.freeScore), model: MODELS.freeScore, rubric, cache: fileCache() });
+  return createAiScorer({ call: createModelCall(MODELS.freeScore, onUsage), model: MODELS.freeScore, rubric, cache: fileCache() });
 }
 
 const program = new Command();
@@ -137,6 +139,53 @@ program
 
     const result = await scoreText(text, opts.targetRole, answers, opts.ai ? buildAiScorer() : undefined);
     console.log(opts.json ? formatJson(result) : opts.markdown ? formatMarkdown(result) : formatText(result));
+  });
+
+program
+  .command("report")
+  .description("write the full paid report (rewrites and step-by-step fixes) as markdown and PDF")
+  .argument("<file>", "the profile: a .txt file of pasted text, or an exported .pdf")
+  .requiredOption("--target-role <role>", 'the role you want to be found for, e.g. "Financial Analyst"')
+  .option("--answers <file>", "JSON file with questionnaire answers (skips the questions)")
+  .option("--out <name>", "name for the output files, without extension", "report")
+  .action(async (file: string, opts: { targetRole: string; answers?: string; out: string }) => {
+    const text = await readProfileFile(file);
+    loadEnv();
+    if (!process.env.ANTHROPIC_API_KEY) fail("The report needs the Claude API. Copy .env.example to .env and add your key.");
+    let answers: Answers = {};
+    if (opts.answers) answers = readAnswersFile(opts.answers);
+    else if (process.stdin.isTTY) answers = await askQuestionnaire(/\.pdf$/i.test(file));
+
+    // Add up what every request for this profile costs.
+    let scoringCost = 0;
+    const result = await scoreText(text, opts.targetRole, answers, buildAiScorer((u) => (scoringCost += costUsd(u))));
+    const outcome = await generatePaidReport(
+      {
+        model: MODELS.paidReport,
+        alreadySpentUsd: scoringCost,
+        makeCall: (onUsage) =>
+          createStructuredCall({
+            model: MODELS.paidReport,
+            schema: PaidReportWireSchema,
+            maxTokens: LIMITS.reportMaxOutputTokens,
+            effort: "medium",
+            onUsage,
+          }),
+      },
+      parseProfile(text),
+      result,
+    );
+
+    // The log holds the time and the cost only, never anything from the profile.
+    mkdirSync("logs", { recursive: true });
+    appendFileSync("logs/report-costs.csv", `${new Date().toISOString()},${outcome.report ? "ok" : "failed"},${outcome.costUsd.toFixed(4)}\n`);
+    console.error(`Cost for this profile: $${outcome.costUsd.toFixed(4)} (limit $${LIMITS.maxReportCostUsd.toFixed(2)})`);
+
+    if (!outcome.report) fail(`The report could not be written (${outcome.problem}). You were not left with a partial report.`);
+    const blocks = buildBlocks(result, outcome.report);
+    writeFileSync(`${opts.out}.md`, renderMarkdown(blocks));
+    writeFileSync(`${opts.out}.pdf`, await renderPdf(blocks));
+    console.log(`Wrote ${opts.out}.md and ${opts.out}.pdf`);
   });
 
 program

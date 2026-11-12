@@ -32,6 +32,7 @@ export interface ScoreResult {
   band: string;
   categories: CategoryScore[];
   topFixes: Fix[];
+  fixes: Fix[]; // every fix with points left to gain, biggest first
   rewrites: { headline: string | null; about: string | null };
   notes: string[];
   disclaimer: string;
@@ -95,10 +96,8 @@ export function combine(
   const band = rubric.bands.find((b) => total >= b.min && total <= b.max)?.label ?? "unknown";
 
   // Array.sort is stable, so ties keep rubric order and output stays repeatable.
-  const topFixes = fixes
-    .filter((f) => f.potentialGain > 0.001)
-    .sort((a, b) => b.potentialGain - a.potentialGain)
-    .slice(0, 3);
+  const ranked = fixes.filter((f) => f.potentialGain > 0.001).sort((a, b) => b.potentialGain - a.potentialGain);
+  const topFixes = ranked.slice(0, 3);
 
   const notes: string[] = [];
   const unavailable = categories.filter((c) => c.aiStatus === "unavailable").map((c) => c.label);
@@ -118,6 +117,7 @@ export function combine(
     band,
     categories,
     topFixes,
+    fixes: ranked,
     rewrites: { headline: ai.headline?.rewrite ?? null, about: ai.about?.rewrite ?? null },
     notes,
     disclaimer: DISCLAIMER,
