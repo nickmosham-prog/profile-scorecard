@@ -50,7 +50,7 @@ test/
 | --- | --- | --- | --- |
 | Headline | 15 | length vs 220-char limit, contains target-role keywords, not generic ("Seeking opportunities") | clarity and specificity |
 | About | 15 | length 1,500-2,600 chars, keywords in first 2 lines, has contact line or call to action | value statement and concrete results |
-| Experience | 20 | every role has a description, count of quantified results (numbers, %, $) | relevance to target role |
+| Experience | 20 | every role has a description, count of quantified results (numbers, %, $), mentions target-role keywords | relevance to target role |
 | Skills | 10 | count (30+ is full marks), top 3 relevant to target role | none |
 | Photo and banner | 8 | self-reported by user | none |
 | Custom URL | 4 | self-reported by user | none |

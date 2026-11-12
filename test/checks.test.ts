@@ -36,7 +36,7 @@ describe("keyword helpers", () => {
 });
 
 describe("headline", () => {
-  const good = "Financial Analyst | FP&A, Forecasting and Financial Modeling | Helping consumer brands plan ahead";
+  const good = "Financial Analyst | FP&A, Forecasting and Financial Modeling | Helping consumer brands plan ahead with confidence";
 
   it("gives full marks to a long, keyworded, specific headline", () => {
     const r = checkHeadline(profile({ headline: good }), ctx());
@@ -116,14 +116,24 @@ describe("experience", () => {
   it("scores the share of roles with a real description", () => {
     const long = "Owned the monthly forecast and variance reporting for the whole business unit.";
     const r = checkExperience(profile({ experience: [role(long), role("")] }), ctx());
-    expect(earned(r, "experience.descriptions")).toBe(3);
+    expect(earned(r, "experience.descriptions")).toBe(2);
   });
 
   it("gives full quantified marks at 5 results and scales below", () => {
     const five = role("Cut cost 10%.\nSaved $5K.\nLed 3 people.\nShipped 40 reports.\nGrew usage 2x.");
-    expect(earned(checkExperience(profile({ experience: [five] }), ctx()), "experience.quantified")).toBe(6);
+    expect(earned(checkExperience(profile({ experience: [five] }), ctx()), "experience.quantified")).toBe(4);
     const two = role("Cut cost 10%.\nSaved $5K.\nWorked hard.");
-    expect(earned(checkExperience(profile({ experience: [two] }), ctx()), "experience.quantified")).toBeCloseTo(2.4);
+    expect(earned(checkExperience(profile({ experience: [two] }), ctx()), "experience.quantified")).toBeCloseTo(1.6);
+  });
+
+  it("scores target-role keywords in titles and descriptions", () => {
+    const kw = (heading: string, description: string, target = "Financial Analyst") =>
+      earned(checkExperience(profile({ experience: [{ heading: [heading], dates: "", description }] }), ctx(target)), "experience.keywords");
+    expect(kw("Financial Analyst", "Built forecasting models in Excel.")).toBe(4);
+    expect(kw("Clerk", "Used Excel and SQL daily.")).toBe(2);
+    expect(kw("Charge Nurse", "Cared for pediatric patients.")).toBe(0);
+    // A role outside the keyword families is judged on its own words.
+    expect(kw("Registered Nurse", "Cared for pediatric patients.", "Registered Nurse")).toBe(4);
   });
 
   it("gives zero when there is no experience", () => {
