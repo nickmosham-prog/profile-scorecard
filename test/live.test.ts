@@ -9,6 +9,12 @@ import { rubric } from "../src/rubric";
 
 // These tests call the real Claude API and cost a fraction of a cent.
 // They only run with:  LIVE=1 npm test   (and an API key available).
+// The key is read from the same .env file the scorer itself uses.
+try {
+  process.loadEnvFile(".env");
+} catch {
+  // No .env file: the key may already be in the environment.
+}
 const live = process.env.LIVE === "1" && Boolean(process.env.ANTHROPIC_API_KEY);
 const read = (file: string) => readFileSync(join(__dirname, "fixtures", file), "utf8");
 
