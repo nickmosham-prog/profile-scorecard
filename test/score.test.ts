@@ -92,8 +92,13 @@ describe("command line", () => {
     expect(json.topFixes).toHaveLength(3);
   }, 60_000);
 
-  it("refuses URLs and explains that PDF import is not built yet", () => {
+  it("refuses URLs", () => {
     expect(() => run("https://example.com/in/someone", "--target-role", "x")).toThrow(/never fetches/);
-    expect(() => run("profile.pdf", "--target-role", "x")).toThrow(/Phase 3/);
+  }, 60_000);
+
+  it("scores a PDF, and asks for pasted text when a PDF cannot be used", () => {
+    expect(run("test/fixtures/profile-two-column.pdf", "--target-role", "Financial Analyst")).toContain("SCORE:");
+    expect(() => run("test/fixtures/no-text.pdf", "--target-role", "x")).toThrow(/no selectable text.*\.txt file/s);
+    expect(() => run("test/fixtures/not-a-pdf.pdf", "--target-role", "x")).toThrow(/could not be opened as a PDF.*\.txt file/s);
   }, 60_000);
 });

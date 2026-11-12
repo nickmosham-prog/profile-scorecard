@@ -6,6 +6,8 @@ import { fileCache } from "./ai/cache";
 import { createModelCall } from "./ai/client";
 import { compareModels } from "./compare";
 import { LIMITS, MODELS } from "./config";
+import { parseProfile } from "./parse";
+import { extractPdfText, PdfReadError } from "./parse/pdf";
 import { formatJson, formatMarkdown, formatText } from "./report";
 import { rubric } from "./rubric";
 import { scoreText } from "./score";
@@ -17,20 +19,37 @@ function fail(message: string): never {
   process.exit(1);
 }
 
-function readProfileFile(file: string): string {
+const PASTE_INSTEAD = "Copy the text of the profile into a .txt file and score that instead.";
+
+async function readProfileFile(file: string): Promise<string> {
   // Hard rule: input is only ever a local file the user supplies.
   if (/^https?:\/\//i.test(file)) {
     fail("This tool never fetches profiles from the web. Paste the profile text into a .txt file and pass that instead.");
   }
-  if (/\.pdf$/i.test(file)) {
-    fail("PDF import is not built yet (Phase 3). Paste the profile text into a .txt file and pass that instead.");
-  }
-  let text: string;
+  let bytes: Buffer;
   try {
-    text = readFileSync(file, "utf8");
+    bytes = readFileSync(file);
   } catch {
     fail(`Could not read "${file}". Check the file name and try again.`);
   }
+
+  let text: string;
+  if (/\.pdf$/i.test(file)) {
+    try {
+      text = await extractPdfText(new Uint8Array(bytes));
+    } catch (error) {
+      const reason = error instanceof PdfReadError ? error.message : "This PDF could not be read.";
+      fail(`${reason} ${PASTE_INSTEAD}`);
+    }
+    // A PDF that opens but is not a profile gives text with no sections in it.
+    const p = parseProfile(text);
+    if (!p.about && p.experience.length === 0 && p.skills.length === 0 && p.education.length === 0) {
+      fail(`No profile sections (Summary, Experience, Education, Skills) were found in this PDF. ${PASTE_INSTEAD}`);
+    }
+  } else {
+    text = bytes.toString("utf8");
+  }
+
   if (!text.trim()) fail(`"${file}" is empty.`);
   if (text.length > LIMITS.maxInputChars) {
     fail(`"${file}" is ${text.length} characters; the limit is ${LIMITS.maxInputChars}.`);
@@ -51,7 +70,7 @@ function readAnswersFile(file: string): Answers {
 }
 
 // The six things pasted text cannot tell us. Pressing Enter skips a question.
-async function askQuestionnaire(): Promise<Answers> {
+async function askQuestionnaire(isPdf: boolean): Promise<Answers> {
   // Questions go to stderr so that --json output on stdout stays clean.
   const rl = createInterface({ input: process.stdin, output: process.stderr });
   const yesNo = async (q: string): Promise<boolean | undefined> => {
@@ -70,6 +89,8 @@ async function askQuestionnaire(): Promise<Answers> {
     featuredCount: await count("How many items are in your Featured section?"),
     recommendationsCount: await count("How many recommendations have you received?"),
     activeLast30Days: await yesNo("Have you posted or commented in the last 30 days?"),
+    // The exported PDF lists only the top 3 skills, so the full count has to be asked.
+    skillsCount: isPdf ? await count("How many skills are listed on your profile in total?") : undefined,
   };
   rl.close();
   // Drop skipped questions so they are reported as "not answered".
@@ -102,17 +123,17 @@ program.name("profile-scorecard").description("Scores a professional-network pro
 
 program
   .command("score")
-  .argument("<file>", "text file containing the pasted profile")
+  .argument("<file>", "the profile: a .txt file of pasted text, or an exported .pdf")
   .requiredOption("--target-role <role>", 'the role you want to be found for, e.g. "Financial Analyst"')
   .option("--answers <file>", "JSON file with questionnaire answers (skips the questions)")
   .option("--no-ai", "rule-based checks only; nothing is sent to the Claude API")
   .option("--json", "print machine-readable JSON")
   .option("--markdown", "print markdown")
   .action(async (file: string, opts: { targetRole: string; answers?: string; ai: boolean; json?: boolean; markdown?: boolean }) => {
-    const text = readProfileFile(file);
+    const text = await readProfileFile(file);
     let answers: Answers = {};
     if (opts.answers) answers = readAnswersFile(opts.answers);
-    else if (process.stdin.isTTY) answers = await askQuestionnaire();
+    else if (process.stdin.isTTY) answers = await askQuestionnaire(/\.pdf$/i.test(file));
 
     const result = await scoreText(text, opts.targetRole, answers, opts.ai ? buildAiScorer() : undefined);
     console.log(opts.json ? formatJson(result) : opts.markdown ? formatMarkdown(result) : formatText(result));

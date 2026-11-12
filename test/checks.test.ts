@@ -151,6 +151,14 @@ describe("skills", () => {
     expect(n(45)).toBe(6);
   });
 
+  it("uses the self-reported count when it is higher than what the text shows", () => {
+    const three = profile({ skills: ["Excel", "SQL", "Tableau"] });
+    const r = checkSkills(three, ctx("Financial Analyst", { skillsCount: 30 }));
+    expect(earned(r, "skills.count")).toBe(6);
+    expect(r.findings[0].message).toContain("self-reported");
+    expect(earned(checkSkills(three, ctx("Financial Analyst", { skillsCount: 1 })), "skills.count")).toBeCloseTo(0.6);
+  });
+
   it("checks whether the first three skills fit the role", () => {
     const top = (skills: string[]) => earned(checkSkills(profile({ skills }), ctx()), "skills.top3");
     expect(top(["Financial Modeling", "Excel", "Forecasting", "Cooking"])).toBe(4);

@@ -29,6 +29,8 @@ export const AnswersSchema = z
     featuredCount: z.number().int().min(0),
     recommendationsCount: z.number().int().min(0),
     activeLast30Days: z.boolean(),
+    // Only asked for PDF input: the export lists just the top 3 skills.
+    skillsCount: z.number().int().min(0),
   })
   .partial()
   .strict();

@@ -8,7 +8,12 @@ export function checkSkills(profile: Profile, ctx: CheckContext): CategoryResult
 
   const countCheck = getCheck(category, "skills.count");
   const fullAt = param(countCheck, "fullAt");
-  const countMessage = skills.length ? `${skills.length} skills listed (target ${fullAt}+).` : "No skills found.";
+  // An exported PDF shows only the top 3 skills, so for PDFs the user is asked
+  // for the real number. The larger of the two counts is used.
+  const reported = ctx.answers.skillsCount ?? 0;
+  const count = Math.max(skills.length, reported);
+  const source = reported > skills.length ? " (self-reported)" : "";
+  const countMessage = count ? `${count} skills listed${source} (target ${fullAt}+).` : "No skills found.";
 
   // "Top 3" means the first three in the order they were pasted.
   const topCheck = getCheck(category, "skills.top3");
@@ -20,7 +25,7 @@ export function checkSkills(profile: Profile, ctx: CheckContext): CategoryResult
     : "No skills found.";
 
   return categoryResult(category, [
-    finding(countCheck, skills.length / fullAt, countMessage),
+    finding(countCheck, count / fullAt, countMessage),
     finding(topCheck, relevant.length / 3, topMessage),
   ]);
 }

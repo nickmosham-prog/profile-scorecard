@@ -32,12 +32,16 @@ const HEADERS: Record<string, string> = {
   organizations: "organizations",
 };
 
+export function isSectionHeader(line: string): boolean {
+  return line.trim().toLowerCase().replace(/:$/, "") in HEADERS;
+}
+
 const MONTH = "(?:jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\\.?";
 const DATE = `(?:${MONTH}\\s+)?(?:19|20)\\d{2}`;
 // A line that starts with a date range, e.g. "Jan 2022 - Present · 2 yrs".
 const DATE_RANGE = new RegExp(`^\\W*${DATE}\\s*(?:[-–—]|to)\\s*(?:present|current|now|${DATE})`, "i");
 
-function isDateLine(line: string): boolean {
+export function isDateLine(line: string): boolean {
   return line.length < 80 && DATE_RANGE.test(line);
 }
 

@@ -6,7 +6,7 @@ This tool is not affiliated with LinkedIn. The rubric is best practice, not Link
 
 ## Status
 
-Phase 2 (command line scorer with AI sub-scores). See `CLAUDE.md` for the full build plan.
+Phase 3 (command line scorer with AI sub-scores and PDF import). See `CLAUDE.md` for the full build plan.
 
 Rule-based checks always run on your computer. If an API key is present, the headline, About and experience text is also sent to the Claude API for three quality sub-scores and rewrite suggestions. Add `--no-ai` to keep everything local.
 
@@ -35,6 +35,16 @@ npx tsx src/cli.ts score profile.txt --target-role "Financial Analyst" --answers
 ```
 
 Add `--json` for machine-readable output or `--markdown` for markdown.
+
+### Score an exported PDF
+
+Pass a `.pdf` instead of a `.txt`:
+
+```bash
+npx tsx src/cli.ts score Profile.pdf --target-role "Financial Analyst"
+```
+
+The export lists only your top 3 skills, so you are asked one extra question: how many skills your profile has in total. If a PDF has no selectable text or no recognisable sections, the tool says so and asks you to paste the text into a `.txt` file instead.
 
 ## Turn on AI scoring
 
