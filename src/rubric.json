@@ -1,5 +1,5 @@
 {
-  "version": "1.1.0",
+  "version": "1.2.0",
   "bands": [
     {
       "min": 0,
@@ -210,7 +210,15 @@
             "minWords": 3
           }
         }
-      ]
+      ],
+      "aiCriterion": "Clarity and specificity: would a recruiter searching for the target role understand in one glance what this person does and for whom?",
+      "aiAnchors": {
+        "0-2": "Empty, a bare status (\"Student\", \"Seeking opportunities\"), or unrelated to the target role.",
+        "3-4": "A bare job title or employer name; says what the person is called but nothing specific.",
+        "5-6": "Names the role and a few skills, but reads as a keyword list with no focus or audience.",
+        "7-8": "Clear role, specific specialties, and either an industry or an outcome.",
+        "9-10": "Clear role, specific specialties, a concrete outcome or audience, and nothing wasted."
+      }
     },
     {
       "id": "about",
@@ -250,7 +258,15 @@
           "fix": "End your About section with a way to reach you (email, or \"message me about ...\").",
           "params": {}
         }
-      ]
+      ],
+      "aiCriterion": "Value statement and concrete results: does it say what the person delivers, back it with specific results, and make the next step obvious?",
+      "aiAnchors": {
+        "0-2": "Empty, or generic traits only (\"hard worker\", \"fast learner\").",
+        "3-4": "Describes interests or duties, with no results and no clear value.",
+        "5-6": "A clear description of what the person does, with at most one concrete result.",
+        "7-8": "A clear value statement supported by several specific results.",
+        "9-10": "A clear value statement, several quantified results, a sense of direction, and an easy way to make contact."
+      }
     },
     {
       "id": "experience",
@@ -288,7 +304,15 @@
             "fullAt": 4
           }
         }
-      ]
+      ],
+      "aiCriterion": "Relevance to the target role: how directly do the roles and accomplishments described prepare this person for the target role?",
+      "aiAnchors": {
+        "0-2": "No experience listed, or none of it relates to the target role.",
+        "3-4": "Unrelated roles with a few transferable skills.",
+        "5-6": "Adjacent roles, or relevant roles described only as duties.",
+        "7-8": "Directly relevant roles with accomplishments that match the target role.",
+        "9-10": "Directly relevant roles with quantified accomplishments in the core work of the target role."
+      }
     },
     {
       "id": "skills",

@@ -20,7 +20,13 @@ const CategorySchema = z
     label: z.string(),
     points: z.number().positive(),
     aiWeight: z.number().min(0),
+    // Only for AI-scored categories: what the model judges, and what each score range means.
+    aiCriterion: z.string().optional(),
+    aiAnchors: z.record(z.string(), z.string()).optional(),
     checks: z.array(CheckSchema).min(1),
+  })
+  .refine((c) => c.aiWeight === 0 || (c.aiCriterion && c.aiAnchors), {
+    message: "a category with an aiWeight needs aiCriterion and aiAnchors",
   })
   .refine(
     (c) => c.checks.reduce((sum, check) => sum + check.points, 0) + c.aiWeight === c.points,

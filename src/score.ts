@@ -1,4 +1,4 @@
-import { getAiSubScores } from "./ai";
+import type { AiScorer } from "./ai";
 import type { AiResults, AiSubScore } from "./ai/schema";
 import { runAllChecks } from "./checks";
 import { roleKeywords } from "./checks/shared";
@@ -44,6 +44,7 @@ export function combine(
   ai: AiResults,
   targetRole: string,
   rubric: Rubric = defaultRubric,
+  aiProblem?: string,
 ): ScoreResult {
   const fixes: Fix[] = [];
   const categories: CategoryScore[] = checkResults.map((result) => {
@@ -100,9 +101,10 @@ export function combine(
     .slice(0, 3);
 
   const notes: string[] = [];
-  if (categories.some((c) => c.aiStatus === "unavailable")) {
+  const unavailable = categories.filter((c) => c.aiStatus === "unavailable").map((c) => c.label);
+  if (unavailable.length) {
     notes.push(
-      "AI score unavailable: Headline, About, and Experience were scored on the rule-based checks only, scaled to each category's full weight.",
+      `AI score unavailable${aiProblem ? ` (${aiProblem})` : ""}: ${unavailable.join(", ")} scored on the rule-based checks only, scaled to the category's full weight.`,
     );
   }
   if (categories.some((c) => c.findings.some((f) => f.message.startsWith("Not answered")))) {
@@ -123,10 +125,16 @@ export function combine(
 }
 
 // The whole pipeline: text in, score out. The web app will call this same function.
-export async function scoreText(text: string, targetRole: string, answers: Answers = {}): Promise<ScoreResult> {
+// Without an `ai` scorer nothing leaves this machine and only the rule-based checks run.
+export async function scoreText(
+  text: string,
+  targetRole: string,
+  answers: Answers = {},
+  ai?: AiScorer,
+): Promise<ScoreResult> {
   const profile = parseProfile(text);
   const ctx = { rubric: defaultRubric, keywords: roleKeywords(targetRole, defaultRubric), answers };
   const checkResults = runAllChecks(profile, ctx);
-  const ai = await getAiSubScores(profile, targetRole);
-  return combine(checkResults, ai, targetRole);
+  const outcome = ai ? await ai(profile, targetRole) : { scores: {}, problem: "AI scoring was not requested" };
+  return combine(checkResults, outcome.scores, targetRole, defaultRubric, outcome.problem);
 }

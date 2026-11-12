@@ -1,8 +1,12 @@
 import { Command } from "commander";
 import { readFileSync } from "node:fs";
 import { createInterface } from "node:readline/promises";
-import { LIMITS } from "./config";
+import { createAiScorer, type AiScorer } from "./ai";
+import { fileCache } from "./ai/cache";
+import { createModelCall } from "./ai/client";
+import { LIMITS, MODELS } from "./config";
 import { formatJson, formatMarkdown, formatText } from "./report";
+import { rubric } from "./rubric";
 import { scoreText } from "./score";
 import { AnswersSchema, type Answers } from "./types";
 
@@ -71,6 +75,23 @@ async function askQuestionnaire(): Promise<Answers> {
   return AnswersSchema.parse(JSON.parse(JSON.stringify(answers)));
 }
 
+// Builds the AI scorer, or explains why it cannot run. The key comes from a
+// .env file in this folder (never committed) or from the environment.
+function buildAiScorer(): AiScorer {
+  try {
+    process.loadEnvFile(".env");
+  } catch {
+    // No .env file is fine; the key may already be in the environment.
+  }
+  if (!process.env.ANTHROPIC_API_KEY) {
+    return async () => ({
+      scores: {},
+      problem: "no API key found; copy .env.example to .env and add your key, or pass --no-ai",
+    });
+  }
+  return createAiScorer({ call: createModelCall(MODELS.freeScore), model: MODELS.freeScore, rubric, cache: fileCache() });
+}
+
 const program = new Command();
 program.name("profile-scorecard").description("Scores a professional-network profile 0-100 against a best-practice rubric.");
 
@@ -79,15 +100,16 @@ program
   .argument("<file>", "text file containing the pasted profile")
   .requiredOption("--target-role <role>", 'the role you want to be found for, e.g. "Financial Analyst"')
   .option("--answers <file>", "JSON file with questionnaire answers (skips the questions)")
+  .option("--no-ai", "rule-based checks only; nothing is sent to the Claude API")
   .option("--json", "print machine-readable JSON")
   .option("--markdown", "print markdown")
-  .action(async (file: string, opts: { targetRole: string; answers?: string; json?: boolean; markdown?: boolean }) => {
+  .action(async (file: string, opts: { targetRole: string; answers?: string; ai: boolean; json?: boolean; markdown?: boolean }) => {
     const text = readProfileFile(file);
     let answers: Answers = {};
     if (opts.answers) answers = readAnswersFile(opts.answers);
     else if (process.stdin.isTTY) answers = await askQuestionnaire();
 
-    const result = await scoreText(text, opts.targetRole, answers);
+    const result = await scoreText(text, opts.targetRole, answers, opts.ai ? buildAiScorer() : undefined);
     console.log(opts.json ? formatJson(result) : opts.markdown ? formatMarkdown(result) : formatText(result));
   });
 

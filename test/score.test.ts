@@ -81,7 +81,7 @@ describe("report formats", () => {
 
 describe("command line", () => {
   const run = (...args: string[]) =>
-    execFileSync("npx", ["tsx", "src/cli.ts", "score", ...args], { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
+    execFileSync("npx", ["tsx", "src/cli.ts", "score", "--no-ai", ...args], { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
   const fixture = "test/fixtures/06-strong-finance.txt";
 
   it("prints the same output twice and valid JSON with --json", () => {

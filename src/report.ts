@@ -12,11 +12,12 @@ function bar(earned: number, max: number, width = 10): string {
 
 function rewriteLines(result: ScoreResult): string[] {
   if (!result.rewrites.headline && !result.rewrites.about) {
-    return ["Not available yet: rewrites come from the AI step, which is switched on in Phase 2."];
+    return ["Not available: rewrites come from the AI step, which did not run."];
   }
   const lines: string[] = [];
   if (result.rewrites.headline) lines.push(`Headline: ${result.rewrites.headline}`);
   if (result.rewrites.about) lines.push(`About opening: ${result.rewrites.about}`);
+  lines.push("These are AI suggestions. Check every fact and fill in any [placeholders] before using them.");
   return lines;
 }
 
