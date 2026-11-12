@@ -6,7 +6,7 @@ This tool is not affiliated with LinkedIn. The rubric is best practice, not Link
 
 ## Status
 
-Phase 3 (command line scorer with AI sub-scores and PDF import). See `CLAUDE.md` for the full build plan.
+Phase 4 (command line scorer with AI sub-scores, PDF import, and the full paid report). See `CLAUDE.md` for the full build plan.
 
 Rule-based checks always run on your computer. If an API key is present, the headline, About and experience text is also sent to the Claude API for three quality sub-scores and rewrite suggestions. Add `--no-ai` to keep everything local.
 
@@ -45,6 +45,16 @@ npx tsx src/cli.ts score Profile.pdf --target-role "Financial Analyst"
 ```
 
 The export lists only your top 3 skills, so you are asked one extra question: how many skills your profile has in total. If a PDF has no selectable text or no recognisable sections, the tool says so and asks you to paste the text into a `.txt` file instead.
+
+## Write the full report
+
+```bash
+npx tsx src/cli.ts report profile.txt --target-role "Financial Analyst"
+```
+
+This scores the profile, then asks the stronger model for three headline options, a full About rewrite, improved experience bullets, and concrete steps for each fix. It writes `report.md` and `report.pdf` (use `--out name` to change the name) and prints what the profile cost. No request is started that could take one profile over $0.10. Each run adds a line (time and cost only) to `logs/report-costs.csv`.
+
+The rewrites are AI suggestions. The report tells the reader to check every fact and fill in the bracketed placeholders.
 
 ## Turn on AI scoring
 
