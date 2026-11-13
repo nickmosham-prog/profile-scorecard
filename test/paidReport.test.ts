@@ -4,10 +4,21 @@ import { buildReportSystemPrompt, buildReportUserMessage, generatePaidReport, wo
 import { costUsd, LIMITS, type Usage } from "../src/config";
 import { buildBlocks, renderMarkdown, renderPdf } from "../src/paidReport";
 import { parseProfile } from "../src/parse";
-import { extractPdfText } from "../src/parse/pdf";
+import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs";
 import { scoreText } from "../src/score";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+
+// All the text in a PDF, page by page, in the order it was written.
+async function allText(pdf: Buffer): Promise<string> {
+  const doc = await getDocument({ data: new Uint8Array(pdf) }).promise;
+  let out = "";
+  for (let i = 1; i <= doc.numPages; i++) {
+    const content = await (await doc.getPage(i)).getTextContent();
+    out += content.items.map((item) => ("str" in item ? item.str : "")).join(" ") + " ";
+  }
+  return out.replace(/\s+/g, " ");
+}
 
 const text = readFileSync(join(__dirname, "fixtures", "04-decent-analyst.txt"), "utf8");
 const profile = parseProfile(text);
@@ -94,9 +105,10 @@ describe("paid report", async () => {
   it("writes markdown and a PDF that say the same thing, with fixes in the score's order", async () => {
     const { makeCall } = fake([good]);
     const { report } = await generatePaidReport({ model: MODEL, makeCall }, profile, result);
-    const blocks = buildBlocks(result, report!);
+    const blocks = buildBlocks(result, report!, { client: "Jordan Example", date: new Date("2026-11-13T12:00:00Z") });
     const md = renderMarkdown(blocks);
-    expect(md).toContain(`## Score: ${result.total} / 100`);
+    expect(md).toContain(`scores ${result.total} out of 100 for Business Analyst`);
+    expect(md).toContain("November 13, 2026");
     expect(md).toContain(`### 1. ${result.fixes[0].category}`);
     expect(md).toContain("Ask your district manager");
     expect(md).toContain("not affiliated with LinkedIn");
@@ -104,10 +116,29 @@ describe("paid report", async () => {
 
     const pdf = await renderPdf(blocks);
     expect(pdf.subarray(0, 5).toString()).toBe("%PDF-");
-    const pdfText = (await extractPdfText(new Uint8Array(pdf))).replace(/\s+/g, " ");
-    expect(pdfText).toContain("Profile Scorecard Report");
-    expect(pdfText).toContain("Your fixes, most valuable first");
+    const pdfText = await allText(pdf);
+    expect(pdfText).toContain("Search visibility review");
+    // Letter-spaced capitals come out with gaps between letters, so compare without spaces.
+    expect(pdfText.replace(/ /g, "")).toContain("PREPAREDFORJORDANEXAMPLE");
+    expect(pdfText).toContain("Exhibit 1: Points earned by category");
+    expect(pdfText).toContain("Not affiliated with LinkedIn");
     expect(pdfText).toContain("Headline options");
+  });
+
+  it("builds the document for one fix, for no fixes, and for a very long About section", async () => {
+    const date = new Date("2026-11-13T12:00:00Z");
+    const longAbout = Array.from({ length: 12 }, (_, i) => `Paragraph ${i + 1}. ` + "I lead reporting for the business and explain the numbers to managers. ".repeat(4)).join("\n\n");
+    const one = buildBlocks({ ...result, fixes: result.fixes.slice(0, 1) }, { ...good, about_rewrite: longAbout }, { date });
+    expect(JSON.stringify(one)).toContain("with 1 fix worth up to");
+    const none = buildBlocks({ ...result, fixes: [] }, good, { date });
+    expect(JSON.stringify(none)).toContain("nothing is left to fix");
+    for (const blocks of [one, none]) {
+      expect((await renderPdf(blocks)).subarray(0, 5).toString()).toBe("%PDF-");
+    }
+    // The long About text runs across pages without losing any of it.
+    const text = await allText(await renderPdf(one));
+    expect(text).toContain("Paragraph 1.");
+    expect(text).toContain("Paragraph 12.");
   });
 
   it("builds a PDF even when the text has characters its fonts lack", async () => {

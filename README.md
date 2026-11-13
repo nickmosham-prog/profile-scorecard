@@ -52,7 +52,7 @@ The export lists only your top 3 skills, so you are asked one extra question: ho
 npx tsx src/cli.ts report profile.txt --target-role "Financial Analyst"
 ```
 
-This scores the profile, then asks the stronger model for three headline options, a full About rewrite, improved experience bullets, and concrete steps for each fix. It writes `report.md` and `report.pdf` (use `--out name` to change the name) and prints what the profile cost. No request is started that could take one profile over $0.10. Each run adds a line (time and cost only) to `logs/report-costs.csv`.
+This scores the profile, then asks the stronger model for three headline options, a full About rewrite, improved experience bullets, and concrete steps for each fix. It writes `report.md` and `report.pdf` (use `--out name` to change the name, and `--client "Name"` to print the client's name on the cover and page headers) and prints what the profile cost. No request is started that could take one profile over $0.10. Each run adds a line (time and cost only) to `logs/report-costs.csv`.
 
 The rewrites are AI suggestions. The report tells the reader to check every fact and fill in the bracketed placeholders.
 

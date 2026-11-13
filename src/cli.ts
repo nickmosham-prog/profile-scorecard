@@ -148,7 +148,8 @@ program
   .requiredOption("--target-role <role>", 'the role you want to be found for, e.g. "Financial Analyst"')
   .option("--answers <file>", "JSON file with questionnaire answers (skips the questions)")
   .option("--out <name>", "name for the output files, without extension", "report")
-  .action(async (file: string, opts: { targetRole: string; answers?: string; out: string }) => {
+  .option("--client <name>", "the client's name, printed on the cover and page headers")
+  .action(async (file: string, opts: { targetRole: string; answers?: string; out: string; client?: string }) => {
     const text = await readProfileFile(file);
     loadEnv();
     if (!process.env.ANTHROPIC_API_KEY) fail("The report needs the Claude API. Copy .env.example to .env and add your key.");
@@ -182,7 +183,7 @@ program
     console.error(`Cost for this profile: $${outcome.costUsd.toFixed(4)} (limit $${LIMITS.maxReportCostUsd.toFixed(2)})`);
 
     if (!outcome.report) fail(`The report could not be written (${outcome.problem}). You were not left with a partial report.`);
-    const blocks = buildBlocks(result, outcome.report);
+    const blocks = buildBlocks(result, outcome.report, { client: opts.client });
     writeFileSync(`${opts.out}.md`, renderMarkdown(blocks));
     writeFileSync(`${opts.out}.pdf`, await renderPdf(blocks));
     console.log(`Wrote ${opts.out}.md and ${opts.out}.pdf`);
