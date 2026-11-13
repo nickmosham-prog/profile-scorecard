@@ -27,6 +27,16 @@ describe("PDF import", () => {
     expect(p.about).not.toContain("Top Skills");
   });
 
+  it("keeps a skill whose name wraps onto two lines as one skill", async () => {
+    // Found on a real export: "Information Technology Infrastructure" was read as two skills.
+    const p = parseProfile(await extractPdfText(load("profile-wrapped-skill.pdf")));
+    expect(p.skills).toEqual(["Financial Modeling", "Information Technology Infrastructure Management Services", "Excel"]);
+    // A web address that wraps at a hyphen is rejoined without a stray space.
+    expect(p.extras.contact).toContain("www.example.com/in/a-very-long-profile-name-example-12345");
+    // Separate contact items are not merged.
+    expect(p.extras.contact).toMatch(/sample\.six@example\.com\s*\n/);
+  });
+
   it("rejoins sentences that the PDF broke across lines", async () => {
     const p = parseProfile(await extractPdfText(load("profile-two-column.pdf")));
     const count = (roles: typeof p.experience) => roles.reduce((n, r) => n + countQuantifiedStatements(r.description), 0);

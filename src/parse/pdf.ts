@@ -68,13 +68,40 @@ function findColumnBoundary(fragments: Fragment[]): number | undefined {
 }
 
 // Reading order: page by page, top to bottom. A blank line marks a visible gap.
-function toLines(fragments: Fragment[]): string[] {
+//
+// `joinWrapped` is for the sidebar. There a long skill or certification name
+// ("Information Technology Infrastructure") wraps onto a second line, and would
+// otherwise be read as two entries. A wrapped line sits one line-height below
+// the line above it; separate entries sit further apart. The Contact block is
+// excluded because its separate items are packed as tightly as wrapped lines.
+function toLines(fragments: Fragment[], joinWrapped = false): string[] {
   const sorted = [...fragments].sort((a, b) => a.page - b.page || b.y - a.y || a.x - b.x);
   const lines: string[] = [];
+  let section = "";
   sorted.forEach((f, i) => {
     const prev = sorted[i - 1];
-    if (prev && prev.page === f.page && prev.y - f.y > 1.9 * Math.max(prev.height, f.height)) lines.push("");
-    lines.push(f.text.replace(/\s+/g, " ").trim());
+    const text = f.text.replace(/\s+/g, " ").trim();
+    if (isSectionHeader(text)) section = text.toLowerCase().replace(/:$/, "");
+    const gap = prev && prev.page === f.page ? prev.y - f.y : 0;
+
+    // Contact items are packed tightly, so only a line cut at a hyphen (a web
+    // address wrapped mid-word) is joined there.
+    const cutAtHyphen = (lines[lines.length - 1] ?? "").endsWith("-");
+    const wrapped =
+      (joinWrapped || cutAtHyphen) &&
+      (section !== "contact" || cutAtHyphen) &&
+      prev !== undefined &&
+      gap > 2 &&
+      gap < 1.4 * Math.max(prev.height, f.height) &&
+      !isSectionHeader(text) &&
+      !isSectionHeader(prev.text.trim());
+    if (wrapped) {
+      const last = lines[lines.length - 1];
+      lines[lines.length - 1] = last.endsWith("-") ? last + text : `${last} ${text}`;
+      return;
+    }
+    if (prev && prev.page === f.page && gap > 1.9 * Math.max(prev.height, f.height)) lines.push("");
+    lines.push(text);
   });
   return lines;
 }
@@ -132,7 +159,7 @@ export async function extractPdfText(data: Uint8Array): Promise<string> {
   }
 
   const mainLines = unwrap(toLines(main)).flatMap((l) => tidyPdfLine(l).split("\n"));
-  const sideLines = toLines(side);
+  const sideLines = toLines(side, true);
 
   // Without a clearly larger name there is nothing more to work out: hand the
   // lines over as they are (name on line 1, headline on line 2).
