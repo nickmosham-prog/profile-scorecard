@@ -137,7 +137,7 @@ program
     if (opts.answers) answers = readAnswersFile(opts.answers);
     else if (process.stdin.isTTY) answers = await askQuestionnaire(/\.pdf$/i.test(file));
 
-    const result = await scoreText(text, opts.targetRole, answers, opts.ai ? buildAiScorer() : undefined);
+    const result = await scoreText(text, opts.targetRole, answers, opts.ai ? buildAiScorer() : undefined, /\.pdf$/i.test(file) ? "pdf" : "text");
     console.log(opts.json ? formatJson(result) : opts.markdown ? formatMarkdown(result) : formatText(result));
   });
 
@@ -159,7 +159,7 @@ program
 
     // Add up what every request for this profile costs.
     let scoringCost = 0;
-    const result = await scoreText(text, opts.targetRole, answers, buildAiScorer((u) => (scoringCost += costUsd(u))));
+    const result = await scoreText(text, opts.targetRole, answers, buildAiScorer((u) => (scoringCost += costUsd(u))), /\.pdf$/i.test(file) ? "pdf" : "text");
     const outcome = await generatePaidReport(
       {
         model: MODELS.paidReport,

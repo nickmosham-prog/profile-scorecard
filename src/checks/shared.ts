@@ -11,6 +11,8 @@ export interface CheckContext {
   rubric: Rubric;
   keywords: RoleKeywords;
   answers: Answers;
+  // Where the profile text came from. A PDF export lists only the top 3 skills.
+  source?: "pdf" | "text";
 }
 
 // `fraction` is how much of the check's points were earned, from 0 to 1.

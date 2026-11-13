@@ -131,9 +131,10 @@ export async function scoreText(
   targetRole: string,
   answers: Answers = {},
   ai?: AiScorer,
+  source?: "pdf" | "text",
 ): Promise<ScoreResult> {
   const profile = parseProfile(text);
-  const ctx = { rubric: defaultRubric, keywords: roleKeywords(targetRole, defaultRubric), answers };
+  const ctx = { rubric: defaultRubric, keywords: roleKeywords(targetRole, defaultRubric), answers, source };
   const checkResults = runAllChecks(profile, ctx);
   const outcome = ai ? await ai(profile, targetRole) : { scores: {}, problem: "AI scoring was not requested" };
   return combine(checkResults, outcome.scores, targetRole, defaultRubric, outcome.problem);

@@ -24,8 +24,15 @@ export function checkSkills(profile: Profile, ctx: CheckContext): CategoryResult
     ? `${relevant.length} of your top 3 skills (${top3.join(", ")}) match the target role.`
     : "No skills found.";
 
+  // A PDF shows only the top 3 skills. Without the owner's total, "3 skills
+  // listed" would be false, so the count is reported as not answered instead.
+  const pdfWithoutCount = ctx.source === "pdf" && ctx.answers.skillsCount === undefined;
+  const countFinding = pdfWithoutCount
+    ? finding(countCheck, 0, "Not answered: a PDF lists only the top 3 skills, so the total count is needed. No points were given.")
+    : finding(countCheck, count / fullAt, countMessage);
+
   return categoryResult(category, [
-    finding(countCheck, count / fullAt, countMessage),
+    countFinding,
     finding(topCheck, relevant.length / 3, topMessage),
   ]);
 }

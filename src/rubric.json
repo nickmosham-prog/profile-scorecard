@@ -1,5 +1,5 @@
 {
-  "version": "1.2.0",
+  "version": "1.2.1",
   "bands": [
     {
       "min": 0,
@@ -40,7 +40,8 @@
     "ii",
     "iii",
     "intern",
-    "associate"
+    "associate",
+    "co"
   ],
   "roleKeywordFamilies": [
     {

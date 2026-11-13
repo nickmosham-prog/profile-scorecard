@@ -30,6 +30,10 @@ describe("keyword helpers", () => {
     expect(k.related).toContain("sql");
   });
 
+  it("ignores the prefix in Co-Founder, Co-Owner and similar titles", () => {
+    expect(roleKeywords("Co-Founder", rubric).roleWords).toEqual(["founder"]);
+  });
+
   it("has no related keywords for a role outside the launch families", () => {
     expect(roleKeywords("Registered Nurse", rubric).related).toEqual([]);
   });
@@ -160,6 +164,17 @@ describe("skills", () => {
     expect(earned(r, "skills.count")).toBe(6);
     expect(r.findings[0].message).toContain("self-reported");
     expect(earned(checkSkills(three, ctx("Financial Analyst", { skillsCount: 1 })), "skills.count")).toBeCloseTo(0.6);
+  });
+
+  it("does not claim a PDF has 3 skills when the total was not given", () => {
+    const three = profile({ skills: ["Excel", "SQL", "Tableau"] });
+    const pdf = checkSkills(three, { ...ctx("Financial Analyst"), source: "pdf" });
+    expect(earned(pdf, "skills.count")).toBe(0);
+    expect(pdf.findings[0].message).toMatch(/^Not answered/);
+    expect(pdf.findings[0].message).not.toContain("3 skills listed");
+    // With the total supplied, or for pasted text, the count is used as before.
+    expect(earned(checkSkills(three, { ...ctx("Financial Analyst", { skillsCount: 30 }), source: "pdf" }), "skills.count")).toBe(6);
+    expect(earned(checkSkills(three, { ...ctx("Financial Analyst"), source: "text" }), "skills.count")).toBeCloseTo(0.6);
   });
 
   it("checks whether the first three skills fit the role", () => {
