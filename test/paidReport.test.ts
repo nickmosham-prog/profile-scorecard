@@ -141,6 +141,21 @@ describe("paid report", async () => {
     expect(text).toContain("Paragraph 12.");
   });
 
+  it("can combine fixes by area without losing any points", () => {
+    const plain = buildBlocks(result, good, { date: new Date("2026-11-13T12:00:00Z") });
+    const grouped = buildBlocks(result, good, { date: new Date("2026-11-13T12:00:00Z"), groupByArea: true });
+    const table = (blocks: ReturnType<typeof buildBlocks>) => blocks.find((b) => b.kind === "table" && b.head[0] === "#") as { rows: string[][] } | undefined;
+    const rows = table(grouped)!.rows;
+    const areas = rows.map((r) => r[1]);
+    expect(new Set(areas).size).toBe(areas.length); // one row per area
+    const gains = rows.map((r) => Number(r[3].replace("+", "")));
+    expect([...gains].sort((a, b) => b - a)).toEqual(gains); // biggest first
+    // Every point from the ungrouped list is still there (within rounding of the one-decimal display).
+    const total = result.fixes.reduce((n, f) => n + f.potentialGain, 0);
+    expect(gains.reduce((n, g) => n + g, 0)).toBeCloseTo(total, 0);
+    expect(table(plain)!.rows.length).toBeLessThanOrEqual(6);
+  });
+
   it("builds a PDF even when the text has characters its fonts lack", async () => {
     const odd = { ...good, overview: "Strong profile 🚀 with ünïcödé and 日本語 text, plus “quotes” and — dashes." };
     const { makeCall } = fake([odd]);

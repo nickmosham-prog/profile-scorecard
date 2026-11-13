@@ -11,6 +11,38 @@ import type { ScoreResult } from "./score";
 export interface ReportOptions {
   client?: string; // printed on the cover and in the page headers
   date?: Date; // printed on the cover; passed in so tests are repeatable
+  // Combine the fixes that belong to the same area (for example three separate
+  // About checks) into one item, so a profile with many gaps gets a short,
+  // readable list instead of the first six of fifteen.
+  groupByArea?: boolean;
+}
+
+interface ReportFix {
+  category: string;
+  label: string;
+  potentialGain: number;
+  fix: string;
+  basis: string;
+}
+
+const MAX_GROUPS = 10;
+
+function groupFixes(fixes: ReportFix[]): ReportFix[] {
+  const groups = new Map<string, ReportFix[]>();
+  for (const f of fixes) groups.set(f.category, [...(groups.get(f.category) ?? []), f]);
+  return [...groups.values()]
+    .map((list): ReportFix =>
+      list.length === 1
+        ? list[0]
+        : {
+            category: list[0].category,
+            label: list.map((f) => f.label).join("; "),
+            potentialGain: list.reduce((total, f) => total + f.potentialGain, 0),
+            fix: list.map((f) => f.fix).join(" "),
+            basis: list.every((f) => f.basis === list[0].basis) ? list[0].basis : "mixed",
+          },
+    )
+    .sort((a, b) => b.potentialGain - a.potentialGain);
 }
 
 type Block =
@@ -33,6 +65,7 @@ const BASIS_LABEL: Record<string, string> = {
   "consistent-with-documented": "Consistent with documented",
   convention: "Convention",
   "ai-judgement": "AI-judged",
+  mixed: "Mixed",
 };
 
 const plural = (n: number, word: string, many = `${word}s`) => `${n} ${n === 1 ? word : many}`;
@@ -40,7 +73,7 @@ const points = (n: number) => n.toFixed(1);
 const capital = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 export function buildBlocks(result: ScoreResult, report: PaidReport, options: ReportOptions = {}): Block[] {
-  const fixes = result.fixes.slice(0, MAX_FIXES);
+  const fixes = options.groupByArea ? groupFixes(result.fixes).slice(0, MAX_GROUPS) : result.fixes.slice(0, MAX_FIXES);
   const sum = (list: typeof fixes) => list.reduce((total, f) => total + f.potentialGain, 0);
   const available = sum(fixes);
   const who = options.client?.trim() || "This profile";
@@ -101,7 +134,13 @@ export function buildBlocks(result: ScoreResult, report: PaidReport, options: Re
       widths: [24, 112, 206, 48, 102],
       rows: fixes.map((f, i) => [String(i + 1), f.category, f.label, `+${points(f.potentialGain)}`, BASIS_LABEL[f.basis] ?? f.basis]),
     });
-    blocks.push({ kind: "note", text: "Fixes are ranked by the rubric points each could still add, calculated in code. Points are rubric points, not a prediction of views or results." });
+    blocks.push({
+      kind: "note",
+      text:
+        "Fixes are ranked by the rubric points each could still add, calculated in code. " +
+        (options.groupByArea ? "Fixes in the same area are combined. " : "") +
+        "Points are rubric points, not a prediction of views or results.",
+    });
     fixes.forEach((fix, i) => {
       blocks.push({ kind: "subheading", text: `${i + 1}. ${fix.category}: +${points(fix.potentialGain)} points available` });
       blocks.push({ kind: "text", text: fix.fix });
